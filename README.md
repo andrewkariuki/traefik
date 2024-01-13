@@ -1,5 +1,7 @@
 # Traefik
 
+Configure traefik locally.
+
 ## SSH Certificates
 
 To generate SSH keys in a local environment you would need the package _mkcert_
