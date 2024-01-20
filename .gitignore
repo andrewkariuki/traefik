@@ -1,3 +1,5 @@
 .env
 certs/*
 conf/*
+.htpasswd
+data/

@@ -1,30 +1,36 @@
-# configure logs
 log:
-  level: ERROR # Set to 'DEBUG' for troubleshooting
+  level: ERROR
 
-# configure entry points
 entryPoints:
   web:
-    address: ":80"
+    address: :80
     http:
-      redirections: # http to https redirection
+      redirections:
         entryPoint:
           to: websecure
           scheme: https
   websecure:
-    address: ":443"
+    address: :443
+  redis:
+    address: :6379
+  postgres:
+    address: :5432
+  mariadb:
+    address: :3306
+  redisinsight:
+    address: :8001
 
-# configure providers
 providers:
   docker:
-    endpoint: "unix:///var/run/docker.sock" # connection to the docker daemon
-    exposedByDefault: false # ignore containers without label 'traefik.enable=true'
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+    network: traefik
+    watch: true
   file:
-    directory: "/etc/traefik/conf" # directory for dynamic traefik configuration files
-    watch: true # changes are processed immediately
+    directory: /etc/traefik/conf
+    watch: true
 
-# configure api service
 api:
   insecure: false
   debug: true
-  dashboard: true # enable the traefik dashboard
+  dashboard: true

@@ -11,6 +11,9 @@ services:
     ports:
       - 80:80
       - 443:443
+      - 6379:6379
+      - 3306:3306
+      - 5432:5432
     networks:
       - traefik
     labels:
@@ -19,16 +22,18 @@ services:
       - traefik.constraint-label=traefik-proxied
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      - traefik.http.routers.traefik-proxied-http.rule=Host(`${DOMAIN?Variable not set}`)
+      - traefik.http.routers.traefik-proxied-http.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
       - traefik.http.routers.traefik-proxied-http.entrypoints=web
       - traefik.http.routers.traefik-proxied-http.middlewares=https-redirect
-      - traefik.http.routers.traefik-proxied-https.rule=Host(`${DOMAIN?Variable not set}`)
+      - traefik.http.routers.traefik-proxied-https.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
       - traefik.http.routers.traefik-proxied-https.entrypoints=websecure
       - traefik.http.routers.traefik-proxied-https.tls=true
+      - traefik.http.routers.traefik-proxied-https.tls.domains[0].main=kariuki.local
+      - traefik.http.routers.traefik-proxied-https.tls.domains[0].sans=*.kariuki.local
       - traefik.http.routers.traefik-proxied-https.service=api@internal
-      - traefik.http.routers.api.middlewares=auth
-      - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
-      - traefik.http.services.traefik-proxied.loadbalancer.server.port=8080
+      - traefik.http.routers.traefik-proxied-https.middlewares=traefik-auth
+      - traefik.http.middlewares.traefik-auth.basicauth.usersfile=/.htpasswd
+
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -36,6 +41,9 @@ services:
       - ./certs/:/etc/traefik/certs/:ro
       - ./traefik.yml:/traefik.yml:ro
       - ./conf/:/etc/traefik/conf/:ro
+      - ./.htpasswd:/.htpasswd:ro
+      - ./data/logs:/logs:rw
+
     env_file:
       - .env
 
