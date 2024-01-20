@@ -1,6 +1,19 @@
 version: "3.9"
 
+########################### NETWORKS
+# Create traefik network
+# docker network create traefik
+
+networks:
+  traefik:
+    external: true
+
+########################### SERVICES
 services:
+  ############################# TRAEFIK
+
+  # Traefik 3 - Reverse Proxy
+
   traefik:
     image: traefik:v3.0
     container_name: traefik
@@ -17,23 +30,27 @@ services:
     networks:
       - traefik
     labels:
+      #- "autoheal=true"
       - traefik.enable=true
-      - traefik.docker.network=traefik
-      - traefik.constraint-label=traefik-proxied
-      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      - traefik.http.routers.traefik-proxied-http.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
-      - traefik.http.routers.traefik-proxied-http.entrypoints=http
-      - traefik.http.routers.traefik-proxied-http.middlewares=https-redirect
-      - traefik.http.routers.traefik-proxied-https.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
-      - traefik.http.routers.traefik-proxied-https.entrypoints=https
-      - traefik.http.routers.traefik-proxied-https.tls=true
-      - traefik.http.routers.traefik-proxied-https.tls.domains[0].main=kariuki.local
-      - traefik.http.routers.traefik-proxied-https.tls.domains[0].sans=*.kariuki.local
-      - traefik.http.routers.traefik-proxied-https.service=api@internal
-      - traefik.http.routers.traefik-proxied-https.middlewares=traefik-auth
+      # HTTP-to-HTTPS Redirect
+      - traefik.http.routers.http-catchall.entrypoints=http
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      # HTTP Routers
+      - traefik.http.routers.traefik-rtr.entrypoints=https
+      - traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAINNAME?Variable not set}`)
+      - traefik.http.routers.traefik-rtr.tls.domains[0].main=${DOMAINNAME?Variable not set}
+      - traefik.http.routers.traefik-rtr.tls.domains[0].sans=*.${DOMAINNAME?Variable not set}
+      ## Services - API
+      - traefik.http.routers.traefik-rtr.service=api@internal
+      ## Healthcheck/ping
+      - traefik.http.routers.ping.rule=Host(`traefik.$DOMAINNAME`) && Path(`/ping`)
+      - traefik.http.routers.ping.tls=true
+      - traefik.http.routers.ping.service=ping@internal"
+      ## Middlewares
+      - traefik.http.routers.traefik-rtr.middlewares=traefik-auth
       - traefik.http.middlewares.traefik-auth.basicauth.usersfile=/.htpasswd
-
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -43,10 +60,5 @@ services:
       - ./conf/:/etc/traefik/conf/:ro
       - ./.htpasswd:/.htpasswd:ro
       - ./data/logs:/logs:rw
-
     env_file:
       - .env
-
-networks:
-  traefik:
-    external: true
