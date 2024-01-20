@@ -23,10 +23,10 @@ services:
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.traefik-proxied-http.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
-      - traefik.http.routers.traefik-proxied-http.entrypoints=web
+      - traefik.http.routers.traefik-proxied-http.entrypoints=http
       - traefik.http.routers.traefik-proxied-http.middlewares=https-redirect
       - traefik.http.routers.traefik-proxied-https.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`)
-      - traefik.http.routers.traefik-proxied-https.entrypoints=websecure
+      - traefik.http.routers.traefik-proxied-https.entrypoints=https
       - traefik.http.routers.traefik-proxied-https.tls=true
       - traefik.http.routers.traefik-proxied-https.tls.domains[0].main=kariuki.local
       - traefik.http.routers.traefik-proxied-https.tls.domains[0].sans=*.kariuki.local
